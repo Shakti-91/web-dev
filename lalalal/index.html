@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <div id="container">
+    <h1>Sign up</h1>
+    <input type="text" id="user" placeholder="username">
+    <input type="password" id="pass" placeholder="password">
+    <button id="actionBtn" onclick="signup()">Signup</button>
+  </div>
+
+  <script>
+    let token = null;
+
+    async function signup() {
+      const username = document.querySelector("#user").value;
+      const password = document.querySelector("#pass").value;
+      if (!username || !password) return alert("Please enter something");
+
+      try {
+        await axios.post("http://localhost:3000/signup", { username, password });
+        alert("You are signed up!");
+        showSigninView();
+      } catch (err) {
+        console.error(err);
+        alert("Signup failed");
+      }
+    }
+
+    function showSigninView() {
+      document.querySelector("h1").innerText = "Sign in";
+      const actionBtn = document.querySelector("#actionBtn");
+      actionBtn.innerText = "Sign in";
+      actionBtn.onclick = signin;
+      document.querySelector("#user").value = "";
+      document.querySelector("#pass").value = "";
+    }
+
+    async function signin() {
+      const username = document.querySelector("#user").value;
+      const password = document.querySelector("#pass").value;
+      if (!username || !password) return alert("Please enter something");
+
+      try {
+        const response = await axios.post("http://localhost:3000/signin", { username, password });
+        token = response.data.token; // save JWT
+        showUserInfoView();
+      } catch (err) {
+        console.error(err);
+        alert("Signin failed");
+      }
+    }
+
+    function showUserInfoView() {
+      const container = document.querySelector("#container");
+      container.innerHTML = `
+        <h1>Welcome!</h1>
+        <button id="infoBtn">Show Info</button>
+        <button id="logoutBtn">Logout</button>
+      `;
+
+      document.querySelector("#infoBtn").onclick = async () => {
+        try {
+          const response = await axios.get("http://localhost:3000/me", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          alert("Username: " + response.data.username);
+        } catch (err) {
+          console.error(err);
+          alert("Failed to fetch info. Token may be invalid.");
+        }
+      };
+
+      document.querySelector("#logoutBtn").onclick = () => {
+        token = null;
+        container.innerHTML = `
+          <h1>Sign up</h1>
+          <input type="text" id="user" placeholder="username">
+          <input type="password" id="pass" placeholder="password">
+          <button id="actionBtn" onclick="signup()">Signup</button>
+        `;
+      };
+    }
+  </script>
+</body>
+</html>
